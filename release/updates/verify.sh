@@ -7,9 +7,6 @@
 . ../common/download_builds.sh
 . ../common/check_updates.sh
 
-clear_cache
-create_cache
-
 ftp_server_to="http://stage.mozilla.org/pub/mozilla.org"
 ftp_server_from="http://stage.mozilla.org/pub/mozilla.org"
 aus_server="https://aus4.mozilla.org"
@@ -34,6 +31,8 @@ usage()
   echo "    -t, --test-only        only test that MARs exist"
   echo "    -m, --mars-only        only test MARs"
   echo "    -c, --complete         complete upgrade test"
+  echo "    --dont-clear-cache     do not clear the cache"
+  echo "    --marionette           test the new marionette approach"
 }
 
 if [ -z "$*" ]
@@ -62,6 +61,14 @@ do
       runmode=$COMPLETE
       shift
       ;;
+    --marionette)
+      marionette=1
+      shift
+      ;;
+    --dont-clear-cache)
+      dontclear=1
+      shift
+      ;;
     *)
       # Move the unrecognized arg to the end of the list
       arg="$1"
@@ -70,6 +77,18 @@ do
       pass_arg_count=`expr $pass_arg_count + 1`
   esac
 done
+
+if [ $dontclear ]
+then
+  echo "Not clearing the cache."
+  if [ ! -d "$(pwd)/cache" ]; then
+     create_cache
+  fi
+else
+  echo "Clearing cache..."
+  clear_cache
+  create_cache
+fi
 
 if [ -n "$arg" ]
 then
@@ -83,6 +102,13 @@ if [ "$runmode" == "0" ]
 then
   usage
   exit 0
+fi
+
+if [ $marionette ]
+then
+  venv="$(pwd)/venv"
+  ../common/setup_marionette.sh $venv
+  export PATH=$venv/bin:$PATH
 fi
 
 while read entry
@@ -124,7 +150,8 @@ do
           download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type 1
           err=$?
         else
-          download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type
+          # download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type
+          err=0
           err=$?
         fi
         if [ "$err" != "0" ]; then
@@ -154,6 +181,25 @@ do
         fi
         source_file=`basename "$from_path"`
         target_file=`basename "$to_path"`
+
+        if [ $marionette ] && [ "$release" \> "38" ]
+        then
+          echo "Running Marionnete tests."
+          # We should optimize this; unpack_build inside of check_updates already unpacks this once
+          mkdir $release
+          mozinstall -d $release downloads/$source_file
+          firefox-ui-update --binary $release/firefox/firefox
+          err=$?
+          if [ "$err" != "0" ]; then
+            echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+            cat "gecko.log"
+          fi
+
+          # Clean up
+          rm -rf $release
+        fi # End of the marionette tests
+        exit
+
         check_updates "$platform" "downloads/$source_file" "downloads/$target_file" $locale $use_old_updater $mar_channel_IDs
         err=$?
         if [ "$err" == "0" ]; then
@@ -181,4 +227,7 @@ do
   done
 done < $config_file
 
-clear_cache
+if [ $dontclear ]
+then
+  clear_cache
+fi
