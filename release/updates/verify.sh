@@ -23,6 +23,7 @@ UPDATE_ONLY=1
 TEST_ONLY=2
 MARS_ONLY=3
 COMPLETE=4
+MARIONETTE=5
 
 usage()
 {
@@ -33,6 +34,24 @@ usage()
   echo "    -c, --complete         complete upgrade test"
   echo "    --dont-clear-cache     do not clear the cache"
   echo "    --marionette           test the new marionette approach"
+}
+
+download()
+{
+  if [ -z "$from" ]
+  then
+    continue
+  fi
+  # cleanup
+  mkdir -p downloads/
+  rm -rf downloads/*
+  cd downloads
+
+  from_path=`echo $from | sed "s/%locale%/${locale}/"`
+  url="${ftp_server_from}/${from_path}"
+  source_file=`basename "$url"`
+  if [ -f "$source_file" ]; then rm "$source_file"; fi
+  cached_download "$source_file" "${ftp_server_from}/${from_path}"
 }
 
 if [ -z "$*" ]
@@ -62,7 +81,7 @@ do
       shift
       ;;
     --marionette)
-      marionette=1
+      runmode=$MARIONETTE
       shift
       ;;
     --dont-clear-cache)
@@ -104,7 +123,7 @@ then
   exit 0
 fi
 
-if [ $marionette ]
+if [ "$runmode" == "$MARIONETTE" ]
 then
   venv="$(pwd)/venv"
   ../common/setup_marionette.sh $venv
@@ -150,15 +169,15 @@ do
           download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type 1
           err=$?
         else
-          # download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type
-          err=0
+          download_mars "${aus_server}/update/3/$product/$release/$build_id/$platform/$locale/$channel/default/default/default/update.xml?force=1" $patch_type
           err=$?
         fi
         if [ "$err" != "0" ]; then
           echo "FAIL: download_mars returned non-zero exit code: $err"
           continue
         fi
-      else
+      elif [ "$runmode" != "$MARIONETTE" ]
+      then
         update_path="$product/$release/$build_id/$platform/$locale/$channel/default/default/default"
         mkdir -p updates/$update_path/complete
         mkdir -p updates/$update_path/partial
@@ -182,24 +201,6 @@ do
         source_file=`basename "$from_path"`
         target_file=`basename "$to_path"`
 
-        if [ $marionette ] && [ "$release" \> "38" ]
-        then
-          echo "Running Marionnete tests."
-          # We should optimize this; unpack_build inside of check_updates already unpacks this once
-          mkdir $release
-          mozinstall -d $release downloads/$source_file
-          firefox-ui-update --binary $release/firefox/firefox
-          err=$?
-          if [ "$err" != "0" ]; then
-            echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
-            cat "gecko.log"
-          fi
-
-          # Clean up
-          rm -rf $release
-        fi # End of the marionette tests
-        exit
-
         check_updates "$platform" "downloads/$source_file" "downloads/$target_file" $locale $use_old_updater $mar_channel_IDs
         err=$?
         if [ "$err" == "0" ]; then
@@ -212,6 +213,25 @@ do
           echo "FAIL: check_updates returned unknown error for $platform downloads/$source_file vs. downloads/$target_file: $err"
         fi
       fi
+
+      if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
+      then
+        download
+        echo "Running Marionnete tests."
+        # We should optimize this; unpack_build inside of check_updates already unpacks this once
+        mkdir $release
+        mozinstall -d $release $source_file
+        firefox-ui-update --binary $release/firefox/firefox
+        err=$?
+        if [ "$err" != "0" ]; then
+          echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+          cat "gecko.log"
+        fi
+
+        # Clean up
+        rm -rf $release
+      fi # End of the marionette tests
+      continue
     done
     if [ -f update/partial.size ] && [ -f update/complete.size ]; then
         partial_size=`cat update/partial.size`
@@ -227,7 +247,7 @@ do
   done
 done < $config_file
 
-if [ $dontclear ]
+if [ -z $dontclear ]
 then
   clear_cache
 fi
