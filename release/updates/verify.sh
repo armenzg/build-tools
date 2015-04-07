@@ -126,7 +126,11 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   venv="$(pwd)/venv"
-  ../common/setup_marionette.sh $venv
+  if [ -z $dontclear ]
+  then
+    rm -rf $venv
+  fi
+  ../common/setup_marionette.sh $venv || exit
   export PATH=$venv/bin:$PATH
 fi
 
@@ -218,6 +222,7 @@ do
       then
         download
         echo "Running Marionnete tests."
+        export DISPLAY=:2
         # We should optimize this; unpack_build inside of check_updates already unpacks this once
         mkdir $release
         mozinstall -d $release $source_file
