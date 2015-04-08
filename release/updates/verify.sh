@@ -45,7 +45,6 @@ download()
   # cleanup
   mkdir -p downloads/
   rm -rf downloads/*
-  cd downloads
 
   from_path=`echo $from | sed "s/%locale%/${locale}/"`
   url="${ftp_server_from}/${from_path}"
@@ -231,7 +230,8 @@ do
         if [ "$err" != "0" ]; then
           echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
           echo "== Dumping gecko.log =="
-          cat "gecko.log"
+          cat gecko.log
+          rm gecko.log
           echo "== End of dumping gecko.log =="
         fi
 
