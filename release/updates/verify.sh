@@ -226,11 +226,13 @@ do
         # We should optimize this; unpack_build inside of check_updates already unpacks this once
         mkdir $release
         mozinstall -d $release $source_file
-        firefox-ui-update --binary $release/firefox/firefox
+        firefox-ui-update --binary $release/firefox/firefox --update-channel $channel
         err=$?
         if [ "$err" != "0" ]; then
           echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+          echo "== Dumping gecko.log =="
           cat "gecko.log"
+          echo "== End of dumping gecko.log =="
         fi
 
         # Clean up
