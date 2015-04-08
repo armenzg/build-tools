@@ -228,7 +228,6 @@ do
         fi
         source_file=`basename "$from_path"`
         target_file=`basename "$to_path"`
-
         check_updates "$platform" "downloads/$source_file" "downloads/$target_file" $locale $use_old_updater $mar_channel_IDs
         err=$?
         if [ "$err" == "0" ]; then
@@ -241,8 +240,6 @@ do
           echo "FAIL: check_updates returned unknown error for $platform downloads/$source_file vs. downloads/$target_file: $err"
         fi
       fi
-
-      continue
     done
     if [ -f update/partial.size ] && [ -f update/complete.size ]; then
         partial_size=`cat update/partial.size`
