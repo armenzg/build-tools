@@ -161,6 +161,31 @@ do
 
   for locale in $locales
   do
+    if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
+    then
+      download
+      echo "Running Marionnete tests."
+      export DISPLAY=:2
+      # We should optimize this; unpack_build inside of check_updates already unpacks this once
+      mkdir $release
+      mozinstall -d $release $source_file
+      firefox-ui-update --binary $release/firefox/firefox --update-channel $channel
+      err=$?
+      if [ "$err" != "0" ]; then
+        echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+        echo "== Dumping gecko.log =="
+        cat gecko.log
+        rm gecko.log
+        echo "== End of dumping gecko.log =="
+      fi
+      echo "Killing Firefox if any"
+      echo `ps aux | grep firefox`
+      killall -9 firefox
+
+      # Clean up
+      rm -rf $release
+    fi # End of the marionette tests
+
     rm -f update/partial.size update/complete.size
     for patch_type in $patch_types
     do
@@ -217,27 +242,6 @@ do
         fi
       fi
 
-      if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
-      then
-        download
-        echo "Running Marionnete tests."
-        export DISPLAY=:2
-        # We should optimize this; unpack_build inside of check_updates already unpacks this once
-        mkdir $release
-        mozinstall -d $release $source_file
-        firefox-ui-update --binary $release/firefox/firefox --update-channel $channel
-        err=$?
-        if [ "$err" != "0" ]; then
-          echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
-          echo "== Dumping gecko.log =="
-          cat gecko.log
-          rm gecko.log
-          echo "== End of dumping gecko.log =="
-        fi
-
-        # Clean up
-        rm -rf $release
-      fi # End of the marionette tests
       continue
     done
     if [ -f update/partial.size ] && [ -f update/complete.size ]; then
