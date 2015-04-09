@@ -62,8 +62,8 @@ run_marionette_tests()
     for i in {1..10}
     do
       netstat -atnp | grep 2828
-      echo "We have a socket open on 2828 without a pid. We need to sleep for 30 seconds." 
-      sleep 10 
+      echo "We have a socket open on 2828 without a pid. We need to sleep for 30 seconds."
+      sleep 10
     done
   fi
   if [ `netstat -anp 2>/dev/null | grep ':2828 ' | grep LISTEN | wc -l` -ne 0 ]
@@ -77,18 +77,19 @@ run_marionette_tests()
   mkdir $release
   echo "Unpacking $source_file..."
   mozinstall -d $release $source_file
+  echo "Running firefox-ui-update..."
   time firefox-ui-update --binary $release/firefox/firefox --update-channel $channel \
-    --log-unittest=output.txt --gecko-log=output.txt
+    --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
   err=$?
   if [ "$err" != "0" ]; then
     echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
-    echo "== Dumping output.txt =="
-    cat output.txt
-    echo "== End of output.txt =="
-    #echo "== Dumping gecko.log =="
-    #cat gecko.log | grep "AUS"
-    #rm gecko.log
-    #echo "== End of dumping gecko.log =="
+    echo "== Dumping bad run output =="
+    cat joint_output.txt
+    echo "== End of bad run outputt =="
+  else
+    echo "== Dumping good run output =="
+    cat short_log.txt
+    echo "== End of good run outputt =="
   fi
 }
 
