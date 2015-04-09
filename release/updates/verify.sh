@@ -53,6 +53,45 @@ download()
   cached_download "$source_file" "${ftp_server_from}/${from_path}"
 }
 
+run_marionette_tests()
+{
+  echo "Running Marionnete tests."
+  export DISPLAY=:2
+  if [ `netstat -anp 2>/dev/null | grep ':2828.*127' | grep TIME_WAIT | wc -l` -ne 0 ]
+  then
+    for i in {1..10}
+    do
+      netstat -atnp | grep 2828
+      echo "We have a socket open on 2828 without a pid. We need to sleep for 30 seconds." 
+      sleep 10 
+    done
+  fi
+  if [ `netstat -anp 2>/dev/null | grep ':2828 ' | grep LISTEN | wc -l` -ne 0 ]
+  then
+    netstat -atnp | grep 2828
+    echo "Killing Firefox (if any) to ensure clean state."
+    killall -9 firefox
+  fi
+  # We should optimize this; unpack_build inside of check_updates already unpacks this once
+  rm -rf $release
+  mkdir $release
+  echo "Unpacking $source_file..."
+  mozinstall -d $release $source_file
+  time firefox-ui-update --binary $release/firefox/firefox --update-channel $channel \
+    --log-unittest=output.txt --gecko-log=output.txt
+  err=$?
+  if [ "$err" != "0" ]; then
+    echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+    echo "== Dumping output.txt =="
+    cat output.txt
+    echo "== End of output.txt =="
+    #echo "== Dumping gecko.log =="
+    #cat gecko.log | grep "AUS"
+    #rm gecko.log
+    #echo "== End of dumping gecko.log =="
+  fi
+}
+
 if [ -z "$*" ]
 then
   usage
@@ -164,26 +203,7 @@ do
     if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
     then
       download
-      echo "Running Marionnete tests."
-      export DISPLAY=:2
-      # We should optimize this; unpack_build inside of check_updates already unpacks this once
-      mkdir $release
-      mozinstall -d $release $source_file
-      firefox-ui-update --binary $release/firefox/firefox --update-channel $channel
-      err=$?
-      if [ "$err" != "0" ]; then
-        echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
-        echo "== Dumping gecko.log =="
-        cat gecko.log
-        rm gecko.log
-        echo "== End of dumping gecko.log =="
-      fi
-      echo "Killing Firefox if any"
-      echo `ps aux | grep firefox`
-      killall -9 firefox
-
-      # Clean up
-      rm -rf $release
+      run_marionette_tests
     fi # End of the marionette tests
 
     rm -f update/partial.size update/complete.size
