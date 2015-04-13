@@ -33,6 +33,7 @@ usage()
   echo "    -m, --mars-only        only test MARs"
   echo "    -c, --complete         complete upgrade test"
   echo "    --dont-clear-cache     do not clear the cache"
+  echo "    --keep-venv            if you do not want the venv to be removed"
   echo "    --marionette           test the new marionette approach"
 }
 
@@ -70,8 +71,8 @@ do
       dontclear=1
       shift
       ;;
-    --keep-env)
-      dontclear=1
+    --keep-venv)
+      keepvenv=1
       shift
       ;;
     *)
