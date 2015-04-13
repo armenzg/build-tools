@@ -4,7 +4,7 @@
 . ../common/cached_download.sh
 . ../common/unpack.sh 
 . ../common/download_mars.sh
-. ../common/download_builds.sh
+. ../common/download_build.sh
 . ../common/check_updates.sh
 
 ftp_server_to="http://stage.mozilla.org/pub/mozilla.org"
@@ -34,63 +34,6 @@ usage()
   echo "    -c, --complete         complete upgrade test"
   echo "    --dont-clear-cache     do not clear the cache"
   echo "    --marionette           test the new marionette approach"
-}
-
-download()
-{
-  if [ -z "$from" ]
-  then
-    continue
-  fi
-  # cleanup
-  mkdir -p downloads/
-  rm -rf downloads/*
-
-  from_path=`echo $from | sed "s/%locale%/${locale}/"`
-  url="${ftp_server_from}/${from_path}"
-  source_file=`basename "$url"`
-  if [ -f "$source_file" ]; then rm "$source_file"; fi
-  cached_download "$source_file" "${ftp_server_from}/${from_path}"
-}
-
-run_marionette_tests()
-{
-  echo "Running Marionnete tests."
-  export DISPLAY=:2
-  if [ `netstat -anp 2>/dev/null | grep ':2828.*127' | grep TIME_WAIT | wc -l` -ne 0 ]
-  then
-    for i in {1..10}
-    do
-      netstat -atnp | grep 2828
-      echo "We have a socket open on 2828 without a pid. We need to sleep for 30 seconds."
-      sleep 10
-    done
-  fi
-  if [ `netstat -anp 2>/dev/null | grep ':2828 ' | grep LISTEN | wc -l` -ne 0 ]
-  then
-    netstat -atnp | grep 2828
-    echo "Killing Firefox (if any) to ensure clean state."
-    killall -9 firefox
-  fi
-  # We should optimize this; unpack_build inside of check_updates already unpacks this once
-  rm -rf $release
-  mkdir $release
-  echo "Unpacking $source_file..."
-  mozinstall -d $release $source_file
-  echo "Running firefox-ui-update..."
-  time firefox-ui-update --binary $release/firefox/firefox --update-channel $channel \
-    --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
-  err=$?
-  if [ "$err" != "0" ]; then
-    echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
-    echo "== Dumping bad run output =="
-    cat joint_output.txt
-    echo "== End of bad run outputt =="
-  else
-    echo "== Dumping good run output =="
-    cat short_log.txt
-    echo "== End of good run outputt =="
-  fi
 }
 
 if [ -z "$*" ]
@@ -124,6 +67,10 @@ do
       shift
       ;;
     --dont-clear-cache)
+      dontclear=1
+      shift
+      ;;
+    --keep-env)
       dontclear=1
       shift
       ;;
@@ -165,7 +112,7 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   venv="$(pwd)/venv"
-  if [ -z $dontclear ]
+  if [ -z $keepvenv ]
   then
     rm -rf $venv
   fi
@@ -203,8 +150,47 @@ do
   do
     if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
     then
-      download
-      run_marionette_tests
+      echo "Running Marionnete tests."
+      # Make sure there is nothing lingering left from previous runs.
+      # We're hoping to improve this in firefox-ui-tests
+      # Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1152460
+      if [ `netstat -anp 2>/dev/null | grep ':2828.*127' | grep TIME_WAIT | wc -l` -ne 0 ]
+      then
+        for i in {1..10}
+        do
+          netstat -atnp | grep 2828
+          echo "We have a socket open on 2828 without a pid. We need to sleep few times."
+          sleep 10
+        done
+      fi
+
+      from_path=`echo $from | sed "s/%locale%/${locale}/"`
+      download_build "${ftp_server_from}/${from_path}"
+      err=$?
+      if [ "$err" != "0" ]; then
+        echo "FAIL: download_build $url returned non-zero exit code: $err"
+        continue
+      fi
+
+      # We should optimize this; unpack_build inside of check_updates already unpacks this once
+      echo "Unpacking downloads/$source_file..."
+      rm -rf source/*
+      unpack_build $platform source "downloads/$source_file" $locale '' $mar_channel_IDs
+
+      echo "Running firefox-ui-update..."
+      time firefox-ui-update --binary source/firefox/firefox --update-channel $channel \
+        --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
+      err=$?
+      if [ "$err" != "0" ]; then
+        echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+        echo "== Dumping bad run output =="
+        cat joint_output.txt
+        echo "== End of bad run outputt =="
+      else
+        echo "== Dumping good run output =="
+        cat short_log.txt
+        echo "== End of good run outputt =="
+      fi
     fi # End of the marionette tests
 
     rm -f update/partial.size update/complete.size
@@ -241,12 +227,21 @@ do
         fi
         from_path=`echo $from | sed "s/%locale%/${locale}/"`
         to_path=`echo $to | sed "s/%locale%/${locale}/"`
-        download_builds "${ftp_server_from}/${from_path}" "${ftp_server_to}/${to_path}"
+
+        download_build "${ftp_server_from}/${from_path}"
         err=$?
         if [ "$err" != "0" ]; then
-          echo "FAIL: download_builds returned non-zero exit code: $err"
+          echo "FAIL: download_build $url returned non-zero exit code: $err"
           continue
         fi
+
+        download_build "${ftp_server_to}/${to_path}"
+        err=$?
+        if [ "$err" != "0" ]; then
+          echo "FAIL: download_build $url returned non-zero exit code: $err"
+          continue
+        fi
+
         source_file=`basename "$from_path"`
         target_file=`basename "$to_path"`
         check_updates "$platform" "downloads/$source_file" "downloads/$target_file" $locale $use_old_updater $mar_channel_IDs
