@@ -229,6 +229,10 @@ do
         from_path=`echo $from | sed "s/%locale%/${locale}/"`
         to_path=`echo $to | sed "s/%locale%/${locale}/"`
 
+        # cleanup
+        mkdir -p downloads/
+        rm -rf downloads/*
+
         download_build "${ftp_server_from}/${from_path}"
         err=$?
         if [ "$err" != "0" ]; then

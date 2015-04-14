@@ -5,10 +5,6 @@ retry="$MY_DIR/../../buildfarm/utils/retry.py -s 1 -r 3"
 
 
 download_build() {
-  # cleanup
-  mkdir -p downloads/
-  rm -rf downloads/*
-
   url="$1"
 
   if [ -z "$url" ]
