@@ -152,6 +152,10 @@ do
     if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
     then
       echo "Running Marionnete tests."
+      # cleanup
+      mkdir -p downloads/
+      rm -rf downloads/*
+
       # Make sure there is nothing lingering left from previous runs.
       # We're hoping to improve this in firefox-ui-tests
       # Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1152460
