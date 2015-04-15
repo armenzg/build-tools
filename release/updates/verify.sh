@@ -177,13 +177,10 @@ do
         continue
       fi
 
-      # We should optimize this; unpack_build inside of check_updates already unpacks this once
-      echo "Unpacking downloads/$source_file..."
-      rm -rf source/*
-      unpack_build $platform source "downloads/$source_file" $locale '' $mar_channel_IDs
-
       echo "Running firefox-ui-update..."
-      time firefox-ui-update --binary source/firefox/firefox --update-channel $channel \
+      # We should optimize this; unpack_build inside of check_updates already unpacks this once, however,
+      # it fails to give us the path to the binary as mozinstall does
+      time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
         --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
       err=$?
       if [ "$err" != "0" ]; then
