@@ -118,7 +118,12 @@ then
     rm -rf $venv
   fi
   ../common/setup_marionette.sh $venv || exit
-  export PATH=$venv/bin:$PATH
+  if [ "`uname -o`" == "Msys" ]
+  then
+    export PATH=$venv/Scripts:$PATH
+  else
+    export PATH=$venv/bin:$PATH
+  fi
 fi
 
 while read entry
@@ -177,11 +182,22 @@ do
         continue
       fi
 
-      echo "Running firefox-ui-update..."
       # We should optimize this; unpack_build inside of check_updates already unpacks this once, however,
       # it fails to give us the path to the binary as mozinstall does
-      time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
-        --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
+      if [ "`uname -o`" == "Msys" ]
+      then
+        echo "Unpacking installer..."
+        rm -rf source
+        # NOTE: We unpack for Windows because of bug 1155743
+        unpack_build $platform source "downloads/$source_file" $locale '' $mar_channel_IDs
+        echo "Running firefox-ui-update..."
+        time firefox-ui-update --binary source/bin/firefox --update-channel $channel \
+          --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
+      else
+        echo "Running firefox-ui-update..."
+        time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
+          --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
+      fi
       err=$?
       if [ "$err" != "0" ]; then
         echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
