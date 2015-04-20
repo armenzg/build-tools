@@ -189,7 +189,7 @@ do
         --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
       err=$?
       if [ "$err" != "0" ]; then
-        echo "FAIL: firefox-ui-update has failed for $product $release $locale."
+        echo "FAIL: firefox-ui-update has failed for ${ftp_server_from}/${from_path}"
         echo "== Dumping bad run output =="
         cat joint_output.txt
         echo "== End of bad run outputt =="
