@@ -3,7 +3,7 @@ venv_dir="$1"
 
 if [ ! -f $HOME/.pip/pip.conf ]
 then
-    pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub"
+    pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub --trusted-host pypi.pub.build.mozilla.org"
 fi
 
 if [ ! -d "$venv_dir" ]; then
