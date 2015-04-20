@@ -113,11 +113,14 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   venv="$(pwd)/venv"
+
   if [ -z $keepvenv ]
   then
     rm -rf $venv
   fi
+
   ../common/setup_marionette.sh $venv || exit
+
   if [ "`uname -o`" == "Msys" ]
   then
     export PATH=$venv/Scripts:$PATH
