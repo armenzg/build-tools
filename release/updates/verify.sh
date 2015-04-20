@@ -156,7 +156,7 @@ do
   do
     if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
     then
-      echo "Running Marionnete tests."
+      echo "Running Marionnete tests for $product $release $locale"
       # cleanup
       mkdir -p downloads/
       rm -rf downloads/*
@@ -183,24 +183,13 @@ do
       fi
 
       # We should optimize this; unpack_build inside of check_updates already unpacks this once, however,
-      # it fails to give us the path to the binary as mozinstall does
-      if [ "`uname -o`" == "Msys" ]
-      then
-        echo "Unpacking installer..."
-        rm -rf source
-        # NOTE: We unpack for Windows because of bug 1155743
-        unpack_build $platform source "downloads/$source_file" $locale '' $mar_channel_IDs
-        echo "Running firefox-ui-update..."
-        time firefox-ui-update --binary source/bin/firefox --update-channel $channel \
-          --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
-      else
-        echo "Running firefox-ui-update..."
-        time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
-          --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
-      fi
+      # unpack_build fails to give us the path to the binary as mozinstall does
+      echo "Running firefox-ui-update..."
+      time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
+        --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
       err=$?
       if [ "$err" != "0" ]; then
-        echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+        echo "FAIL: firefox-ui-update has failed for $product $release $locale."
         echo "== Dumping bad run output =="
         cat joint_output.txt
         echo "== End of bad run outputt =="
