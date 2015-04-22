@@ -18,6 +18,6 @@ if [ ! -d "$venv_dir" ]; then
         pip_path=$venv_dir/bin/pip
     fi
 
-    $pip_path install firefox-ui-tests==0.3.dev0 $pip_options || exit
+    $pip_path install firefox-ui-tests==0.2 $pip_options || exit
 fi
 $pip_path freeze
