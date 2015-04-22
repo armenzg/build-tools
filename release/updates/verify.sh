@@ -113,12 +113,20 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   venv="$(pwd)/venv"
+
   if [ -z $keepvenv ]
   then
     rm -rf $venv
   fi
+
   ../common/setup_marionette.sh $venv || exit
-  export PATH=$venv/bin:$PATH
+
+  if [ "`uname -o`" == "Msys" ]
+  then
+    export PATH=$venv/Scripts:$PATH
+  else
+    export PATH=$venv/bin:$PATH
+  fi
 fi
 
 while read entry
@@ -151,7 +159,7 @@ do
   do
     if [ "$runmode" == "$MARIONETTE" ] && [ "$release" \> "38" ]
     then
-      echo "Running Marionnete tests."
+      echo "Running Marionnete tests for $product $release $locale"
       # cleanup
       mkdir -p downloads/
       rm -rf downloads/*
@@ -177,17 +185,14 @@ do
         continue
       fi
 
-      # We should optimize this; unpack_build inside of check_updates already unpacks this once
-      echo "Unpacking downloads/$source_file..."
-      rm -rf source/*
-      unpack_build $platform source "downloads/$source_file" $locale '' $mar_channel_IDs
-
+      # We should optimize this; unpack_build inside of check_updates already unpacks this once, however,
+      # unpack_build fails to give us the path to the binary as mozinstall does
       echo "Running firefox-ui-update..."
-      time firefox-ui-update --binary source/firefox/firefox --update-channel $channel \
+      time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
         --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
       err=$?
       if [ "$err" != "0" ]; then
-        echo "FAIL: firefox-ui-update has failed for ${release}/firefox/firefox."
+        echo "FAIL: firefox-ui-update has failed for ${ftp_server_from}/${from_path}"
         echo "== Dumping bad run output =="
         cat joint_output.txt
         echo "== End of bad run outputt =="
