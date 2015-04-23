@@ -118,11 +118,9 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   options=""
-  venv="$(pwd)/venv"
-
   if [ -z $keepvenv ]; then options="$options --keep-venv"; fi
   if [ -z $developermode ]; then options="$options --developer-mode"; fi
-  source ../common/setup_firefox_ui_updates.sh $options $venv || exit
+  ../common/setup_firefox_ui_updates.sh $options $(pwd)/venv || exit
 fi
 
 while read entry

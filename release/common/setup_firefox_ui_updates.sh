@@ -22,11 +22,11 @@ while [ "$#" -gt "$pass_arg_count" ]
 do
   case "$1" in
     --keep-env)
-      keepvenv=1 
+      keepvenv=1
       shift
       ;;
     --developer-mode)
-      developermode=1 
+      developermode=1
       shift
       ;;
     *)
@@ -60,13 +60,13 @@ if [ ! -d "$venv_dir" ]; then
     virtualenv --no-site-packages "$venv_dir" || exit
 fi
 
-# Options needed when not running on a loaner 
+# Options needed when not running on a loaner
 if [ $developer_mode ]
 then
   pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub"
 fi
 
-# Activate virtualenv 
+# Activate virtualenv
 if [ "`uname -o`" == "Msys" ]
 then
   source $venv_dir/Scripts/activate
