@@ -69,15 +69,15 @@ do
       shift
       ;;
     --dont-clear-cache)
-      dontclear=1
+      dont_clear=1
       shift
       ;;
     --keep-venv)
-      keepvenv=1
+      keep_venv=1
       shift
       ;;
     --developer-mode)
-      developermode=1
+      developer_mode=1
       shift
       ;;
     *)
@@ -89,7 +89,7 @@ do
   esac
 done
 
-if [ $dontclear ]
+if [ $dont_clear ]
 then
   echo "Not clearing the cache."
   if [ ! -d "$(pwd)/cache" ]; then
@@ -118,8 +118,8 @@ fi
 if [ "$runmode" == "$MARIONETTE" ]
 then
   options=""
-  if [ -z $keepvenv ]; then options="$options --keep-venv"; fi
-  if [ -z $developermode ]; then options="$options --developer-mode"; fi
+  if [ $keep_venv ]; then options="$options --keep-venv"; fi
+  if [ $developer_mode ]; then options="$options --developer-mode"; fi
   ../common/setup_firefox_ui_updates.sh $options $(pwd)/venv || exit
 fi
 
@@ -266,7 +266,7 @@ do
   done
 done < $config_file
 
-if [ -z $dontclear ]
+if [ -z $dont_clear ]
 then
   clear_cache
 fi

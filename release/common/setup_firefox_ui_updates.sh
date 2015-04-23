@@ -22,11 +22,11 @@ while [ "$#" -gt "$pass_arg_count" ]
 do
   case "$1" in
     --keep-env)
-      keepvenv=1
+      keep_venv=1
       shift
       ;;
     --developer-mode)
-      developermode=1
+      developer_mode=1
       shift
       ;;
     *)
@@ -49,7 +49,7 @@ else
 fi
 
 # Clear venv if not requested to be kept
-if [ -z $keepvenv ]
+if [ -z $keep_venv ]
 then
   echo "Removing $venv_dir..."
   rm -rf $venv_dir
@@ -75,7 +75,7 @@ else
 fi
 
 # Install requirements
-pip install -r $DIR/firefox_ui_updates_requirements.txt  || exit
+pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
 
 # Most local Windows machines don't have win32api installed
 if [ $developer_mode ]
