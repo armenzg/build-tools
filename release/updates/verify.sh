@@ -120,7 +120,7 @@ then
   options=""
   if [ $keep_venv ]; then options="$options --keep-venv"; fi
   if [ $developer_mode ]; then options="$options --developer-mode"; fi
-  ../common/setup_firefox_ui_updates.sh $options $(pwd)/venv || exit
+  source ../common/setup_firefox_ui_updates.sh $options $(pwd)/venv || exit
 fi
 
 while read entry
