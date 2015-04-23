@@ -78,7 +78,7 @@ fi
 pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
 
 # Most local Windows machines don't have win32api installed
-if [ $developer_mode && "`uname -o`" == "Msys" ]
+if [ $developer_mode ] && [ "`uname -o`" == "Msys" ]
 then
     # win32api is needed by retry.py
     easy_install $PYWIN32
