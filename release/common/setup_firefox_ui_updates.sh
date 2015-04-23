@@ -21,7 +21,7 @@ pass_arg_count=0
 while [ "$#" -gt "$pass_arg_count" ]
 do
   case "$1" in
-    --keep-env)
+    --keep-venv)
       keep_venv=1
       shift
       ;;
@@ -63,7 +63,7 @@ fi
 # Options needed when not running on a loaner
 if [ $developer_mode ]
 then
-  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub"
+  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub --trusted-host pypi.pub.build.mozilla.org"
 fi
 
 # Activate virtualenv
