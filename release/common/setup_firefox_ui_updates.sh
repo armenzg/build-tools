@@ -21,7 +21,7 @@ pass_arg_count=0
 while [ "$#" -gt "$pass_arg_count" ]
 do
   case "$1" in
-    --keep-env)
+    --keep-venv)
       keep_venv=1
       shift
       ;;
@@ -63,11 +63,11 @@ fi
 # Options needed when not running on a loaner
 if [ $developer_mode ]
 then
-  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub"
+  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub --trusted-host pypi.pub.build.mozilla.org"
 fi
 
 # Activate virtualenv
-if [ "`uname -o`" == "Msys" ]
+if [[ "`uname`" =~ "MING.*" ]]
 then
   source $venv_dir/Scripts/activate
 else
@@ -78,7 +78,7 @@ fi
 pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
 
 # Most local Windows machines don't have win32api installed
-if [ $developer_mode ] && [ "`uname -o`" == "Msys" ]
+if [ $developer_mode ] && [[ "`uname`" =~ "MING.*" ]]
 then
     # win32api is needed by retry.py
     easy_install $PYWIN32
