@@ -32,9 +32,10 @@ usage()
   echo "    -t, --test-only        only test that MARs exist"
   echo "    -m, --mars-only        only test MARs"
   echo "    -c, --complete         complete upgrade test"
+  echo "    --marionette           test the new marionette approach"
   echo "    --dont-clear-cache     do not clear the cache"
   echo "    --keep-venv            if you do not want the venv to be removed"
-  echo "    --marionette           test the new marionette approach"
+  echo "    --developer-mode       if you're not running this on a releng loaner"
 }
 
 if [ -z "$*" ]
@@ -68,11 +69,15 @@ do
       shift
       ;;
     --dont-clear-cache)
-      dontclear=1
+      dont_clear=1
       shift
       ;;
     --keep-venv)
-      keepvenv=1
+      keep_venv=1
+      shift
+      ;;
+    --developer-mode)
+      developer_mode=1
       shift
       ;;
     *)
@@ -84,7 +89,7 @@ do
   esac
 done
 
-if [ $dontclear ]
+if [ $dont_clear ]
 then
   echo "Not clearing the cache."
   if [ ! -d "$(pwd)/cache" ]; then
@@ -112,21 +117,10 @@ fi
 
 if [ "$runmode" == "$MARIONETTE" ]
 then
-  venv="$(pwd)/venv"
-
-  if [ -z $keepvenv ]
-  then
-    rm -rf $venv
-  fi
-
-  ../common/setup_marionette.sh $venv || exit
-
-  if [ "`uname -o`" == "Msys" ]
-  then
-    export PATH=$venv/Scripts:$PATH
-  else
-    export PATH=$venv/bin:$PATH
-  fi
+  options=""
+  if [ $keep_venv ]; then options="$options --keep-venv"; fi
+  if [ $developer_mode ]; then options="$options --developer-mode"; fi
+  source ../common/setup_firefox_ui_updates.sh $options $(pwd)/venv || exit
 fi
 
 while read entry
@@ -164,19 +158,6 @@ do
       mkdir -p downloads/
       rm -rf downloads/*
 
-      # Make sure there is nothing lingering left from previous runs.
-      # We're hoping to improve this in firefox-ui-tests
-      # Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1152460
-      if [ `netstat -anp 2>/dev/null | grep ':2828.*127' | grep TIME_WAIT | wc -l` -ne 0 ]
-      then
-        for i in {1..10}
-        do
-          netstat -atnp | grep 2828
-          echo "We have a socket open on 2828 without a pid. We need to sleep few times."
-          sleep 10
-        done
-      fi
-
       from_path=`echo $from | sed "s/%locale%/${locale}/"`
       download_build "${ftp_server_from}/${from_path}"
       err=$?
@@ -185,8 +166,8 @@ do
         continue
       fi
 
-      # We should optimize this; unpack_build inside of check_updates already unpacks this once, however,
-      # unpack_build fails to give us the path to the binary as mozinstall does
+      # We should optimize this; unpack_build inside of check_updates already unpacks this once,
+      # however, unpack_build fails to give us the path to the binary as mozinstall does
       echo "Running firefox-ui-update..."
       time firefox-ui-update --installer "downloads/$source_file" --update-channel $channel \
         --log-unittest=short_log.txt --gecko-log=- 2>&1 > joint_output.txt
@@ -285,7 +266,7 @@ do
   done
 done < $config_file
 
-if [ -z $dontclear ]
+if [ -z $dont_clear ]
 then
   clear_cache
 fi
