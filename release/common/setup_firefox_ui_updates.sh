@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script creates a virtualenv with all the dependencies to run 
+# This script creates a virtualenv with all the dependencies to run
 # firefox-ui-update tests.
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 PYWIN32=http://pypi.pub.build.mozilla.org/pub/pywin32-216.win32-py2.7.exe
@@ -8,7 +8,7 @@ usage()
 {
   echo "Usage: setup-marionette.sh [OPTION] [VENV_DIR]"
   echo "    --keep-venv          if you do not want the venv to be removed"
-  echo "    --developer-mode     if you're not running this on a releng loaner" 
+  echo "    --developer-mode     if you're not running this on a releng loaner"
 }
 
 if [ -z "$*" ]
