@@ -63,7 +63,7 @@ fi
 # Options needed when not running on a loaner
 if [ $developer_mode ]
 then
-  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub --trusted-host pypi.pub.build.mozilla.org"
+  pip_options="--no-index --find-links http://pypi.pub.build.mozilla.org/pub"
 fi
 
 # Activate virtualenv

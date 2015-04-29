@@ -35,7 +35,6 @@ usage()
   echo "    --marionette           test the new marionette approach"
   echo "    --dont-clear-cache     do not clear the cache"
   echo "    --keep-venv            if you do not want the venv to be removed"
-  echo "    --developer-mode       if you're not running this on a releng loaner"
 }
 
 if [ -z "$*" ]
@@ -74,10 +73,6 @@ do
       ;;
     --keep-venv)
       keep_venv=1
-      shift
-      ;;
-    --developer-mode)
-      developer_mode=1
       shift
       ;;
     *)
