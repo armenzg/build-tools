@@ -158,6 +158,10 @@ do
       mkdir -p downloads/
       rm -rf downloads/*
 
+      if [ -z "$from" ]
+      then
+        continue
+      fi
       from_path=`echo $from | sed "s/%locale%/${locale}/"`
       download_build "${ftp_server_from}/${from_path}"
       err=$?
@@ -176,11 +180,11 @@ do
         echo "FAIL: firefox-ui-update has failed for ${ftp_server_from}/${from_path}"
         echo "== Dumping bad run output =="
         cat joint_output.txt
-        echo "== End of bad run outputt =="
+        echo "== End of bad run output =="
       else
         echo "== Dumping good run output =="
         cat short_log.txt
-        echo "== End of good run outputt =="
+        echo "== End of good run output =="
       fi
     fi # End of the marionette tests
 

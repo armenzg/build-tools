@@ -74,8 +74,12 @@ else
   source $venv_dir/bin/activate
 fi
 
-# Install requirements
+# firefox-ui-tests has few requirements, however, its requirements do not have
+# hard pinned versions. If a new version of those dependencies would be uploaded
+# to the internal pypi, we would start using it unless we hard pinned them here
 pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
+# We install firefox-ui-tests separetedly to cleary distinct the main tool from its dependencies
+pip install $pip_options firefox-ui-tests==0.2  || exit
 
 # Most local Windows machines don't have win32api installed
 if [ $developer_mode ] && [[ "`uname`" =~ "MING.*" ]]
