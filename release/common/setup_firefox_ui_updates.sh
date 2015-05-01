@@ -57,7 +57,13 @@ fi
 
 # Create the venv if it does not exist
 if [ ! -d "$venv_dir" ]; then
-    virtualenv --no-site-packages "$venv_dir" || exit
+  venv_options="--no-site-packages "$venv_dir""
+  if [ -z $developer_mode ] && [[ "`uname`" == "MINGW32_NT-6.1" ]]
+  then
+      python c:/mozilla-build/buildbotve/virtualenv.py $venv_options || exit
+  else
+      virtualenv $venv_options || exit
+  fi
 fi
 
 # Options needed when not running on a loaner
@@ -67,7 +73,7 @@ then
 fi
 
 # Activate virtualenv
-if [[ "`uname`" =~ "MING.*" ]]
+if [[ "`uname`" == "MING32_NT-6.1" ]]
 then
   source $venv_dir/Scripts/activate
 else
@@ -82,7 +88,7 @@ pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
 pip install $pip_options firefox-ui-tests==0.2  || exit
 
 # Most local Windows machines don't have win32api installed
-if [ $developer_mode ] && [[ "`uname`" =~ "MING.*" ]]
+if [ $developer_mode ] && [[ "`uname`" == "MING32_NT-6.1" ]]
 then
     # win32api is needed by retry.py
     easy_install $PYWIN32
