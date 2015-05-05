@@ -3,6 +3,7 @@
 # firefox-ui-update tests.
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 PYWIN32=http://pypi.pub.build.mozilla.org/pub/pywin32-216.win32-py2.7.exe
+WIN32_UNAME="MINGW32_NT-6.1"
 
 usage()
 {
@@ -58,7 +59,7 @@ fi
 # Create the venv if it does not exist
 if [ ! -d "$venv_dir" ]; then
   venv_options="--no-site-packages "$venv_dir""
-  if [ -z $developer_mode ] && [[ "`uname`" == "MINGW32_NT-6.1" ]]
+  if [ -z $developer_mode ] && [[ "`uname`" == $WIN32_UNAME ]]
   then
       python c:/mozilla-build/buildbotve/virtualenv.py $venv_options || exit
   else
@@ -73,7 +74,7 @@ then
 fi
 
 # Activate virtualenv
-if [[ "`uname`" == "MING32_NT-6.1" ]]
+if [[ "`uname`" == $WIN32_UNAME ]]
 then
   source $venv_dir/Scripts/activate
 else
@@ -88,7 +89,7 @@ pip install $pip_options -r $DIR/firefox_ui_updates_requirements.txt  || exit
 pip install $pip_options firefox-ui-tests==0.2  || exit
 
 # Most local Windows machines don't have win32api installed
-if [ $developer_mode ] && [[ "`uname`" == "MING32_NT-6.1" ]]
+if [ $developer_mode ] && [[ "`uname`" == $WIN32_UNAME ]]
 then
     # win32api is needed by retry.py
     easy_install $PYWIN32
